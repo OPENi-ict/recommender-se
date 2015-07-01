@@ -4,16 +4,16 @@ import com.google.gson.Gson;
 
 public class ApplicationRecommendationCollection {
 	
-	private ApplicationRecommendation[] collection;
+	private ApplicationRecommendation[] recommendations;
 
 	public ApplicationRecommendationCollection(
 			ApplicationRecommendation[] collection) {
 		super();
-		this.collection = collection;
+		this.recommendations = collection;
 	}
 
 	public ApplicationRecommendation[] getCollection() {
-		return collection;
+		return recommendations;
 	}
 	
     public String getCollectionAsJsonObject() {

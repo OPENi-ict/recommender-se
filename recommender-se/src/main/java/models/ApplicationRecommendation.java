@@ -2,77 +2,79 @@ package models;
 
 public class ApplicationRecommendation {
 	
-	private String name;
+	private String title;
 	private String url;
-	private String type;
-	private String service;
-	private String picture;
+	private String version;
+	private String icon;
 	private String description;
-	private double score;
-	private String[] categories;
 	private double price;
 	private String currency;
-	private String code;
 	private int rating;
 	private String os;
-	public ApplicationRecommendation(String name, String url, String type,
-			String service, String picture, String description, double score,
-			String[] categories, double price, String currency, String code,
-			int rating, String os) {
+	private String[] categories;
+	private String developer;
+	
+	public ApplicationRecommendation(String title, String url, String version,
+			String icon, String description, double price, String currency,
+			int rating, String os, String[] categories, String developer) {
 		super();
-		this.name = name;
+		this.title = title;
 		this.url = url;
-		this.type = type;
-		this.service = service;
-		this.picture = picture;
+		this.version = version;
+		this.icon = icon;
 		this.description = description;
-		this.score = score;
-		this.categories = categories;
 		this.price = price;
 		this.currency = currency;
-		this.code = code;
 		this.rating = rating;
 		this.os = os;
+		this.categories = categories;
+		this.developer = developer;
 	}
-	public String getName() {
-		return name;
+
+	public String getTitle() {
+		return title;
 	}
+
 	public String getUrl() {
 		return url;
 	}
-	public String getType() {
-		return type;
+
+	public String getVersion() {
+		return version;
 	}
-	public String getService() {
-		return service;
+
+	public String getIcon() {
+		return icon;
 	}
-	public String getPicture() {
-		return picture;
-	}
+
 	public String getDescription() {
 		return description;
 	}
-	public double getScore() {
-		return score;
-	}
-	public String[] getCategories() {
-		return categories;
-	}
+
 	public double getPrice() {
 		return price;
 	}
+
 	public String getCurrency() {
 		return currency;
 	}
-	public String getCode() {
-		return code;
-	}
+
 	public int getRating() {
 		return rating;
 	}
+
 	public String getOs() {
 		return os;
 	}
+
+	public String[] getCategories() {
+		return categories;
+	}
+
+	public String getDeveloper() {
+		return developer;
+	}
+	
 	
 	
 

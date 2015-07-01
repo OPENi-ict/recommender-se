@@ -36,6 +36,21 @@ public class Person {
 		}
 		
 	}
+	
+	
+
+	public Person(String gender, String age, String education,
+			String[] interests) {
+		super();
+		this.gender = gender;
+		this.age = age;
+		this.education = education;
+		this.interests = interests;
+		this.children_num = null;
+		this.married = null;
+	}
+
+
 
 	public String getGender() {
 		return gender;

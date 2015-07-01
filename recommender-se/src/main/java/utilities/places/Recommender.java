@@ -11,6 +11,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import utilities.ContextRetriever;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -41,7 +43,7 @@ public class Recommender {
 
 		String pid = createRecoNodeAndContext(auth, permissions, timestamp);
 		String category = getRecommendedCategory(pid);
-		System.out.println(category);
+//		System.out.println(category);
 		return category;
 
 	}
@@ -58,7 +60,7 @@ public class Recommender {
 
 			String res = (response.readEntity(String.class));
 
-			System.out.println(res);
+//			System.out.println(res);
 			JsonObject jobj = new Gson().fromJson(res, JsonObject.class);
 			JsonArray results = jobj.get("results").getAsJsonArray();
 			JsonObject jo = results.get(0).getAsJsonObject();
@@ -67,7 +69,7 @@ public class Recommender {
 			JsonObject je = data.get(0).getAsJsonObject();
 			String id = je.get("row").getAsString();
 
-			System.out.println(id);
+//			System.out.println(id);
 			return id;
 
 		}
@@ -81,18 +83,9 @@ public class Recommender {
 	private static String createRecoNodeAndContext(String auth,ContextPermissions permissions, String timestamp){
 
 		String pid = createRecommendationNode();
-		Person p;
-		System.out.println("auth:"+auth);
-		if (auth.equals("1")){
-			p = new Person("/user_1.properties");
-		}
-		else if (auth.equals("2")){
-			p = new Person("/user_2.properties");
-		}
-		else{
-			p = new Person("/user_3.properties");
-
-		}
+		Person p = ContextRetriever.getContext(auth);
+//		System.out.println("auth:"+auth);
+		
 		String payload="{\"statements\" : [ {\"statement\" : \" match ";
 		String match = 	"(n:Recommendation) ";
 		String where = " where id(n)= "+pid;
@@ -149,7 +142,7 @@ public class Recommender {
 		}		
 
 		payload += match +where+ create+" \"} ]}";
-		System.out.println(payload);
+//		System.out.println(payload);
 		Client client = ClientBuilder.newClient();
 		WebTarget target = client.target(SERVER_ROOT_URI);
 		target.request().accept(MediaType.APPLICATION_JSON).post(Entity.entity(payload, MediaType.APPLICATION_JSON), Response.class);
@@ -160,7 +153,7 @@ public class Recommender {
 	private static String getRecommendedCategory(String pid){
 		String payload = "{\"statements\" : [ {\"statement\" : \" MATCH p = allShortestPaths(source-[r*..3]-(destination:PlaceType)) where id(source)="+pid+
 				" RETURN destination.name as name,count(p) as total order by total desc limit 5 \"} ]}";
-		System.out.println(payload);
+//		System.out.println(payload);
 
 		Client client = ClientBuilder.newClient();
 		WebTarget target = client.target(SERVER_ROOT_URI);
@@ -169,7 +162,7 @@ public class Recommender {
 		try{
 			String res = (response.readEntity(String.class));
 
-			System.out.println(res);
+//			System.out.println(res);
 			JsonObject jobj = new Gson().fromJson(res, JsonObject.class);
 			JsonArray results = jobj.get("results").getAsJsonArray();
 			JsonObject jo = results.get(0).getAsJsonObject();

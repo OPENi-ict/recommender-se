@@ -107,34 +107,35 @@ public class FoursquareSearch {
 		return result;
 	}
 
-	private String parsePhotoResponse(String response) {
-
-		JsonParser parser = new JsonParser();
-		JsonElement json = parser.parse(response);
-		JsonObject jobject = json.getAsJsonObject();
-		JsonObject jresponse = jobject.getAsJsonObject("response");
-		JsonObject jphotos = jresponse.getAsJsonObject("photos");
-
-		JsonArray jitems = jphotos.getAsJsonArray("items");
-		if (jitems.size() == 0)
-			return "";
-		JsonObject item = jitems.get(0).getAsJsonObject();
-		String prefix = item.get("prefix").getAsString();
-		String suffix = item.get("suffix").getAsString();
-		String photoUrl = prefix + "300x300" + suffix;
-		//
-		return photoUrl;
-
-	}
+//	private String parsePhotoResponse(String response) {
+//
+//		JsonParser parser = new JsonParser();
+//		JsonElement json = parser.parse(response);
+//		JsonObject jobject = json.getAsJsonObject();
+//		JsonObject jresponse = jobject.getAsJsonObject("response");
+//		JsonObject jphotos = jresponse.getAsJsonObject("photos");
+//
+//		JsonArray jitems = jphotos.getAsJsonArray("items");
+//		if (jitems.size() == 0)
+//			return "";
+//		JsonObject item = jitems.get(0).getAsJsonObject();
+//		String prefix = item.get("prefix").getAsString();
+//		String suffix = item.get("suffix").getAsString();
+//		String photoUrl = prefix + "300x300" + suffix;
+//		//
+//		return photoUrl;
+//
+//	}
 
 	public String getFsquareNearbyVenues(double latitude, double longitude,
-			String category) {
+			String category, float radiance) {
 
 		String responseEntity = ClientBuilder.newClient()
 				.target("https://api.foursquare.com").path("v2/venues/search")
 				.queryParam("v", "20131016")
 				.queryParam("ll", latitude + "," + longitude)
 				.queryParam("venuePhotos", "1")
+				.queryParam("radius", radiance)
 				.queryParam("categoryId", categoryMap.get(category))
 				.queryParam("oauth_token", auth)
 				.request()
@@ -145,20 +146,20 @@ public class FoursquareSearch {
 
 	}
 
-	private String getVenuePhoto(String venueID) {
-
-
-		String path = "v2/venues/" + venueID + "/photos";
-
-		String responseEntity = ClientBuilder.newClient()
-				.target("https://api.foursquare.com").path(path)
-				.queryParam("v", "20131016").queryParam("limit", 1)
-				.queryParam("oauth_token", auth).request()
-				.get(String.class);
-
-		return parsePhotoResponse(responseEntity);
-
-	}
+//	private String getVenuePhoto(String venueID) {
+//
+//
+//		String path = "v2/venues/" + venueID + "/photos";
+//
+//		String responseEntity = ClientBuilder.newClient()
+//				.target("https://api.foursquare.com").path(path)
+//				.queryParam("v", "20131016").queryParam("limit", 1)
+//				.queryParam("oauth_token", auth).request()
+//				.get(String.class);
+//
+//		return parsePhotoResponse(responseEntity);
+//
+//	}
 
 
 }

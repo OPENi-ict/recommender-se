@@ -5,9 +5,13 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 
 import models.ContextPermissions;
@@ -32,17 +36,14 @@ public class Recommend {
 	@Path("/places")
 	@Produces("application/json")
 	@ApiOperation(value = "Get place recommendations",httpMethod="GET", notes = "Get recommended places for OPENi user.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 400, message = "Invalid path or wrong parameters specified"),
-			@ApiResponse(code = 503, message = "Service unavailable") 
-	})
+	
 	public Response getPlaces(
+//			@Context HttpHeaders headers,
 			@ApiParam(value="longitude",required=true, name="long") @NotNull @QueryParam("long") double longitude,
 			@ApiParam(value="latitude",required=true, name="lat")@NotNull @QueryParam("lat") double latitude,
-			@ApiParam(value="radius in meters-defaults to city-wide area",required=false, name="rad")@DefaultValue("3") @QueryParam("rad") float radiance,
-			@ApiParam(value="criteria used to order recommendations",required=false, name="orderby",allowableValues = "score,name,distance")@DefaultValue("score") @QueryParam("orderby") String orderby,
+			@ApiParam(value="radius in meters-defaults to 100km",required=false, name="rad")@DefaultValue("100000.0") @QueryParam("rad") float radiance,
 			@ApiParam(value="user context to be taken into consideration",required=true, name="context",allowableValues = "all,gender,age,education,interests,country,ethnicity,family_status",allowMultiple=true)@DefaultValue("all") @QueryParam("context") String contextTypes,
-			@ApiParam(value="context id",required=true, name="id")@DefaultValue("1") @QueryParam("id") String auth, 
+			@ApiParam(value="OPENi Auth Token",required=true, name="Authorization")@HeaderParam(value="Authorization")  String auth, 
 			@ApiParam(value="unix timestamp",required=false, name="timestamp") @QueryParam("timestamp") String tms) {
 
 		boolean useInterests = false;
@@ -55,6 +56,15 @@ public class Recommend {
 
 
 		try{
+			if((auth.equals(null))) {
+				return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		    }
+		}
+		catch (Exception e){
+			return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		}
+		try{
+			
 
 			if (tms==null)
 				useCurrentTime = false;
@@ -93,7 +103,7 @@ public class Recommend {
 			String categoryName = Recommender.getCategoryFromShortestPaths(auth,permissions,tms);
 			FoursquareSearch fs = new FoursquareSearch();
 			String fsq_response = fs.getFsquareNearbyVenues(latitude, longitude,
-					categoryName);
+					categoryName,radiance);
 			return Response.status(200).entity(fsq_response).build();
 		}
 		catch(Exception e){
@@ -105,13 +115,21 @@ public class Recommend {
 	@GET
 	@Produces("application/json")
 	@Path("/places/categories")
-	@ApiOperation(value = "Get place categories",httpMethod="GET", notes = "You can find here the available place categories. Currently supported categories come from Foursquare.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 404, message = "No place categories found.") 
-	})
-	public Response getPlaceCategories() {
+	@ApiOperation(value = "Get place categories",httpMethod="GET", notes = "You can find here the available place categories.")
+	
+	public Response getPlaceCategories(
+			@ApiParam(value="OPENi Auth Token",required=true, name="Authorization")@HeaderParam(value="Authorization")  String auth) {
 
 		String output;
+		
+		try{
+			if((auth.equals(null))) {
+				return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		    }
+		}
+		catch (Exception e){
+			return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		}
 
 
 		try {
@@ -134,18 +152,15 @@ public class Recommend {
 	@Path("/products/")
 	@Produces("application/json")
 	@ApiOperation(value = "Get product recommendations",httpMethod="GET", notes = "Get recommended products for OPENi user from specific store.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 404, message = "Service not found") 
-	})
 	public Response getProducts(
 			@ApiParam(value="algorithmSortingParameter",required=false, name="sortParam", allowableValues = "count,sum,mean")@DefaultValue("mean") @QueryParam("sortParam") String sortParam,
 			@ApiParam(value="product category",required=false, name="category")@DefaultValue("all") @QueryParam("category") String category,
-			@ApiParam(value="criteria used to order recommendations",required=false, name="orderby",allowableValues = "score,name,price")@DefaultValue("score") @QueryParam("orderby") String orderby,
 			@ApiParam(value="user context to be taken into consideration",required=true, name="context",allowableValues = "all,gender,age,education,interests,country,ethnicity,family_status",allowMultiple=true)@DefaultValue("all") @QueryParam("context") String contextTypes,
-			@ApiParam(value="context id",required=true, name="id")@DefaultValue("1") @QueryParam("id") String auth, 
+			@ApiParam(value="OPENi Auth Token",required=true, name="Authorization")@HeaderParam(value="Authorization")  String auth,
 			@ApiParam(value="starting point of the price",required=false, name="priceLower")@DefaultValue("1") @QueryParam("priceLower") int priceLow, 
 			@ApiParam(value="upper limit of the price",required=false, name="priceUpper")@DefaultValue("1") @QueryParam("priceUpper") int priceUp, 
-			@ApiParam(value="currency to apply on price filters-currently only euro",required=false, name="currency", allowableValues="euro")@DefaultValue("euro") @QueryParam("currency") String currency) {
+			@ApiParam(value="currency to apply on price filters-currently only euro",required=false, name="currency", allowableValues="euro")@DefaultValue("euro") @QueryParam("currency") String currency,
+			@ApiParam(value="shop cloudlet authorization",required=true, name="shop")@QueryParam("shop") String shop) {
 
 		String output;
 		boolean useInterests = false;
@@ -154,6 +169,15 @@ public class Recommend {
 		boolean useGender = false;
 		boolean useEducation = false;
 		boolean useCategs = false;
+		
+		try{
+			if((auth.equals(null))) {
+				return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		    }
+		}
+		catch (Exception e){
+			return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		}
 
 		if (!category.equals("all"))
 			useCategs = true;
@@ -186,9 +210,6 @@ public class Recommend {
 
 		ContextPermissions permissions = new ContextPermissions(useInterests, useAge, useEducation, useGender, false, false, false, useFamily, useFamily, false);
 
-
-
-
 		try {
 			System.out.println(auth);
 			if (useCategs)
@@ -199,7 +220,7 @@ public class Recommend {
 		} catch (Exception e) {
 			// TODO
 			e.printStackTrace();
-			return Response.status(Response.Status.NOT_FOUND).entity("{\"error\":\"Product recommendation service not found.\"}").build();
+			return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity("{\"error\":\"Product recommendation service is temporarily unavailable.\"}").build();
 		}
 
 	}
@@ -207,13 +228,19 @@ public class Recommend {
 	@GET
 	@Path("/products/categories/")
 	@Produces("application/json")
-	@ApiOperation(value = "Get product categories",httpMethod="GET", notes = "You can find here the available categories for OPENi products.Currently shows dummy data.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 404, message = "No product categories found") 
-	})
+	@ApiOperation(value = "Get product categories",httpMethod="GET", notes = "You can find here the available categories for OPENi products.")
 	public Response getProductsCategories(
+			@ApiParam(value="OPENi Auth Token",required=true, name="Authorization")@HeaderParam(value="Authorization")  String auth
 			) {
 
+		try{
+			if((auth.equals(null))) {
+				return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		    }
+		}
+		catch (Exception e){
+			return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		}
 		try{
 
 			//			String output = ProductsRetriever.getProductCategories();
@@ -231,25 +258,29 @@ public class Recommend {
 	@Path("/applications/")
 	@Produces("application/json")
 	@ApiOperation(value = "Get application recommendations",httpMethod="GET", notes = "Get recommended applications for OPENi user.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 404, message = "Application recommendation service not found") 
-	})
 	public Response getApplications(
-			@ApiParam(value="user id - temporary",required=true, name="id")@DefaultValue("1") @QueryParam("id") int id, 
+			@ApiParam(value="OPENi Auth Token",required=true, name="Authorization")@HeaderParam(value="Authorization")  String auth, 
 			@ApiParam(value="application category",required=false, name="category")@DefaultValue("all") @QueryParam("category") String category,
-			@ApiParam(value="criteria used to order recommendations",required=false, name="orderby",allowableValues = "score,name,price")@DefaultValue("score") @QueryParam("orderby") String orderby,
 			@ApiParam(value="user context to be taken into consideration",required=false, name="context",allowableValues = "all,gender,age,education,interests,country,ethnicity,family_status",allowMultiple=true)@DefaultValue("all") @QueryParam("context") List<String> contextTypes){
 
 		String output;
 
 
+		try{
+			if((auth.equals(null))) {
+				return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		    }
+		}
+		catch (Exception e){
+			return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		}
 		try {
-			output = ApplicationRecommender.getRecommendation("");
+			output = ApplicationRecommender.getRecommendation(auth);
 			return Response.status(200).entity(output).build();
 		} catch (Exception e) {
 			// TODO
 			e.printStackTrace();
-			return Response.status(Response.Status.NOT_FOUND).entity("{\"error\":\"Application recommendation service not found.\"}").build();
+			return Response.status(Response.Status.SERVICE_UNAVAILABLE).entity("{\"error\":\"Application recommendation service temporarily unavailable.\"}").build();
 		}
 
 	}
@@ -258,14 +289,21 @@ public class Recommend {
 	@Path("/applications/categories/")
 	@Produces("application/json")
 	@ApiOperation(value = "Get the application categories",httpMethod="GET", notes = "You can find here the available categories for OPENi applications.Currently shows dummy data.")
-	@ApiResponses(value = {
-			@ApiResponse(code = 404, message = "No application categories found") 
-	})
+	
 	public Response getApplicationsCategories(
+			@ApiParam(value="OPENi Auth Token",required=true, name="Authorization")@HeaderParam(value="Authorization")  String auth
 			) {
 
 		try{
-			return Response.status(200).entity("{\"categories:\":[{\"name\":\"games\",\"id\":\"ac_1\"},{\"name\":\"entertainment\",\"id\":\"ac_1\"}]}").build();
+			if((auth.equals(null))) {
+				return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		    }
+		}
+		catch (Exception e){
+			return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		}
+		try{
+			return Response.status(200).entity("{\"categories:\":[{\"name\":\"Games\",\"id\":\"ac_1\"},{\"name\":\"Entertainment\",\"id\":\"ac_2\"},{\"name\":\"FPS\",\"id\":\"ac_3\"},{\"name\":\"Football Management\",\"id\":\"ac_4\"}]}").build();
 		}
 		catch (Exception e){
 			return Response.status(Response.Status.NOT_FOUND).entity("{\"error\":\"No application categories found.\"}").build();
@@ -274,5 +312,32 @@ public class Recommend {
 	}
 
 
+	@POST
+	@Path("/train/")
+	@Produces("application/json")
+	@ApiOperation(value = "Train SE with new interactions",httpMethod="POST", notes = "Help Recommender SE adjust to the OPENi community of users, by training it based on new user interactions.")
+	
+	public Response train(
+			@ApiParam(value="OPENi Auth Token",required=true, name="Authorization")@HeaderParam(value="Authorization")  String auth){
+
+
+		try{
+			if((auth.equals(null))) {
+				return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		    }
+		}
+		catch (Exception e){
+			return Response.status(401).entity("{\"Error\":\"Unauthorized request.\"}").build();
+		}
+		try {
+			//temporary
+			return Response.status(200).entity("{\"Message\":\"Thank you for improving Recommender SE.\"}").build();
+		} catch (Exception e) {
+			// TODO
+			e.printStackTrace();
+			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{\"error\":\"The operation was not completed successfully. Please make sure you have permissions over the specified cloudlets.\"}").build();
+		}
+
+	}
 
 }

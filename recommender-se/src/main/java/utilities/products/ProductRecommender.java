@@ -12,9 +12,12 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import utilities.ContextRetriever;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+
 
 
 
@@ -46,8 +49,8 @@ public class ProductRecommender {
 
 	public static String getRecommendation(String authorization,ContextPermissions permissions, String sortBy){
 
-		System.out.println(authorization);
-		String pid = createRecoNodeAndContext(authorization, permissions);
+//		System.out.println(authorization);
+		String pid = createRecoNodeAndContext(authorization, permissions,true);
 		ProductRecommendationCollection collection = getProducts(pid,sortBy);
 		return collection.getCollectionAsJsonObject();
 	}
@@ -56,7 +59,7 @@ public class ProductRecommender {
 
 		if(category.equals("All"))
 			getRecommendation(authorization, permissions, sortBy);
-		System.out.println(authorization);
+//		System.out.println(authorization);
 		String pid = createRecoNodeAndContext(authorization, permissions);
 		ProductRecommendationCollection collection = getProducts(pid,sortBy,category);
 		return collection.getCollectionAsJsonObject();
@@ -74,7 +77,7 @@ public class ProductRecommender {
 
 			String res = (response.readEntity(String.class));
 
-			System.out.println(res);
+//			System.out.println(res);
 			JsonObject jobj = new Gson().fromJson(res, JsonObject.class);
 			JsonArray results = jobj.get("results").getAsJsonArray();
 			JsonObject jo = results.get(0).getAsJsonObject();
@@ -83,7 +86,7 @@ public class ProductRecommender {
 			JsonObject je = data.get(0).getAsJsonObject();
 			String id = je.get("row").getAsString();
 
-			System.out.println(id);
+//			System.out.println(id);
 			return id;
 
 		}
@@ -99,10 +102,10 @@ public class ProductRecommender {
 		String pid = createRecommendationNode();
 		Person p;
 		System.out.println("auth:"+auth);
-		if (auth.equals("1")){
+		if ((auth.equals("1"))||(auth.equals("5"))){
 			p = new Person("/user_1.properties");
 		}
-		else if (auth.equals("2")){
+		else if ((auth.equals("2"))||(auth.equals("6"))){
 			p = new Person("/user_2.properties");
 
 		}
@@ -164,6 +167,66 @@ public class ProductRecommender {
 		System.out.println(res);
 		return pid;
 	}
+	
+	private static String createRecoNodeAndContext(String auth,ContextPermissions permissions,boolean fromCloudlet){
+
+		String pid = createRecommendationNode();
+		Person p = ContextRetriever.getContext(auth);
+		
+		String payload="{\"statements\" : [ {\"statement\" : \" match ";
+		String match = 	"(n:Recommendation) ";
+		String where = " where id(n)= "+pid;
+		String create = "";
+
+		if (permissions.isUseGender()){
+			match+=", (gender:Gender {value:\\\""+p.getGender()+"\\\"})";
+			create+=" create unique (n)-[rg:HASCONTEXT]->(gender) ";
+		}
+		if (permissions.isUseAge()){
+			match+=", (age:Age {value:\\\""+p.getAge()+"\\\"})";
+			create+=" create unique (n)-[ra:HASCONTEXT]->(age) ";
+		}
+//		if (permissions.isUseChildrenNumber()){
+//			if((p.getChildrenNum()).equals("0")){
+//				match+=", (num:HasChildren {value:false})";
+//			}
+//			else{
+//				match+=", (num:HasChildren {value:true,number:"+p.getChildrenNum()+"})";
+//			}
+//			create+=" create unique (n)-[rh:HASCONTEXT]->(num) ";
+//		}
+		if (permissions.isUseEducation()){
+			match+=", (edu:Education {value:\\\""+p.getEducation()+"\\\"})";
+			create+=" create unique (n)-[re:HASCONTEXT]->(edu) ";
+		}
+//		if (permissions.isUseMarriageState()){
+//			if ((p.getMarried()).equals("false")){
+//				match+=", (mar:IsMarried {value:false})";
+//			}
+//			else {
+//				match+=", (mar:IsMarried {value:true})";
+//			}
+//			create+=" create unique (n)-[ri:HASCONTEXT]->(mar)";
+//		}
+		if (permissions.isUseInterests()){
+			String[] interests = p.getInterests();
+			for(int i=0;i<interests.length;i++){
+				match+=", (int"+i+":Interests {value:\\\""+interests[i]+"\\\"})";
+				create+=" create unique (n)-[rint"+i+":HASCONTEXT]->(int"+i+")";
+			}
+		}		
+
+		payload += match +where+ create+" \"} ]}";
+		System.out.println(payload);
+		Client client = ClientBuilder.newClient();
+		WebTarget target = client.target(SERVER_ROOT_URI);
+		Response response = target.request().accept(MediaType.APPLICATION_JSON).post(Entity.entity(payload, MediaType.APPLICATION_JSON), Response.class);
+
+		String res = (response.readEntity(String.class));
+
+		System.out.println(res);
+		return pid;
+	}
 
 	private static ProductRecommendationCollection parseProductRecommendationResponse(String res, int scoreFieldId){
 
@@ -197,15 +260,15 @@ public class ProductRecommender {
 	private static ProductRecommendationCollection getProducts(String pid, String sortBy){
 
 		String payload = "{\"statements\" : [ {\"statement\" : \" MATCH "
-				+ "(n:ProductRecom)-[hase]-(:Context)-[]-(:Person)-[]-"
+				+ "(n:ProductRecom)-[hase]-(c:Context)-[]-(:Person)-[]-"
 				+ "(:Training)-[include]-(pr:Product) where id(n)="+pid
 				+ " RETURN pr.product_name,pr.product_code,pr.image,pr.category_name, "
 				+ "count(include) as count,"
-				+ "sum(include.rating) as sum,"
+				+ "sum(include.rating*c.weight) as sum,"
 				+ "sum(include.rating)/count(include) as mean "
 				+ "order by "+sortBy
 				+ " desc  LIMIT 20 \"} ]}";
-		System.out.println(payload);
+//		System.out.println(payload);
 
 		Client client = ClientBuilder.newClient();
 		WebTarget target = client.target(SERVER_ROOT_URI);
