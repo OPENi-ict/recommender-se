@@ -61,6 +61,8 @@ public class Training {
 				String match = 	"(n:Person) ";
 				String where = " where id(n)= "+pid;
 				String create = "";
+				String interestsCorrect = line.substring(line.indexOf("\"")+1, line.lastIndexOf("\""));
+				System.out.println(interestsCorrect);
 				contents = line.split(",");
 				String gender = contents[2];
 				if(gender.length()>0){
@@ -129,8 +131,12 @@ public class Training {
 				}
 //				String income = contents[7];
 				String interest = contents[8];
+				System.out.println(interest);
+
 				interest = interest.replace("\"", "");
-				String[] interests = interest.split(",");
+				System.out.println(interest);
+
+				String[] interests = interestsCorrect.split(",");
 				for(int i=0;i<interests.length;i++){
 					match+=", (int"+i+":Interests {value:\\\""+interests[i]+"\\\"})";
 					create+=" create unique (n)-[rint"+i+":HASCONTEXT]->(int"+i+")";
@@ -266,10 +272,12 @@ public class Training {
 					payload="{\"statements\" : [ {\"statement\" : \" match ";
 					match = 	"(n:Training),(p1:Product {product_code:\\\""+contents[1]+"\\\"}) ";
 					where = " where id(n)= "+rid;
-					create = "create unique (n)-[r:INCLUDES {rating:"+contents[contents.length-2]+"}]->(p1)";
+					create = " create unique (n)-[r:INCLUDES {rating:"+contents[contents.length-2]+"}]->(p1)";
 					payload += match +where+ create+" \"} ]}";
 			        Response response = target.request().accept(MediaType.APPLICATION_JSON).post(Entity.entity(payload, MediaType.APPLICATION_JSON), Response.class);
 			        String res = (response.readEntity(String.class));
+					System.out.println(payload);
+
 					System.out.println(res);
 								
 			}

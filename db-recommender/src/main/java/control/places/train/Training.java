@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 public class Training {
 
 	private static String SERVER_ROOT_URI;
+	private static String DB_INITIAL_DATA_LOCATION;
 	private static HashMap<String,String> persons; //person id from sqlite3 to person chars
 
 
@@ -33,6 +34,7 @@ public class Training {
 		try {
 			props.load(in);
 			SERVER_ROOT_URI = props.getProperty("SERVER_ROOT_URI");
+			DB_INITIAL_DATA_LOCATION = props.getProperty("DB_INITIAL_DATA_LOCATION");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -44,7 +46,7 @@ public class Training {
 
 		try {
 			//id,fsq_user_id,gender,educationalLevel,birthday,children,married,income,interests,country,ethnicity
-			BufferedReader in = new BufferedReader(new FileReader(new File("C:\\Users\\Evmorfia\\Documents\\openi_recommender_training\\fakeUsers.csv")));
+			BufferedReader in = new BufferedReader(new FileReader(new File(DB_INITIAL_DATA_LOCATION+"mysqlPeople.csv")));
 			String line;
 			String[] contents;
 			while ((line = in.readLine()) != null) {
@@ -97,7 +99,8 @@ public class Training {
 	private static String createPersonWithContext(String personListId, long timestamp){
 
 		String pid = createPerson(timestamp);
-		String[] contents = (persons.get(personListId)).split(",");
+		String line = persons.get(personListId);
+		String[] contents = line.split(",");
 		
 
 		String payload="{\"statements\" : [ {\"statement\" : \" match ";
@@ -170,7 +173,9 @@ public class Training {
 		//		String income = contents[7];
 		String interest = contents[8];
 		interest = interest.replace("\"", "");
-		String[] interests = interest.split(",");
+		String interestsCorrect = line.substring(line.indexOf("\"")+1, line.lastIndexOf("\""));
+
+		String[] interests = interestsCorrect.split(",");
 		for(int i=0;i<interests.length;i++){
 			match+=", (int"+i+":Interests {value:\\\""+interests[i]+"\\\"})";
 			create+=" create unique (n)-[rint"+i+":HASCONTEXT]->(int"+i+")";
@@ -206,7 +211,7 @@ public class Training {
 
 		try {
 			//user_id,category_name,timestamp
-			BufferedReader in = new BufferedReader(new FileReader(new File("C:\\Users\\Evmorfia\\Documents\\openi_recommender_training\\fakeCheckins.csv")));
+			BufferedReader in = new BufferedReader(new FileReader(new File(DB_INITIAL_DATA_LOCATION+"mysqlCheckins.csv")));
 			String line;
 			String[] contents;
 

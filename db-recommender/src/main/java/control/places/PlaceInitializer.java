@@ -4,14 +4,31 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Properties;
 
+import control.places.train.Training;
 import dbtransactions.DatabaseUtils;
 import dbtransactions.DatabaseUtils.LabelTypes;
 import dbtransactions.DatabaseUtils.RelTypes;
 
 public class PlaceInitializer {
+	
+static String DB_INITIAL_DATA_LOCATION;
+	
+	static{
+		Properties props = new Properties();
+		InputStream in = Training.class.getResourceAsStream("/props.properties");
+
+		try {
+			props.load(in);
+			DB_INITIAL_DATA_LOCATION = props.getProperty("DB_INITIAL_DATA_LOCATION");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public static void initialize(String db_path) throws URISyntaxException, IOException{
 		
@@ -39,8 +56,7 @@ public class PlaceInitializer {
 		String provenance = "frsq";
 		String code;
 		int count = 0;
-		URI file_path = PlaceInitializer.class.getResource("/FoursquarePlaces.csv").toURI();
-		BufferedReader in = new BufferedReader(new FileReader(new File(file_path)));
+		BufferedReader in = new BufferedReader(new FileReader(new File(DB_INITIAL_DATA_LOCATION+"FoursquarePlaces.csv")));
 
 		String line;
 			
@@ -73,8 +89,7 @@ public class PlaceInitializer {
 		
 		String[] pinax = new String[5];
 		
-		URI file_path = PlaceInitializer.class.getResource("/FoursquarePlaces.csv").toURI();
-		BufferedReader in = new BufferedReader(new FileReader(new File(file_path)));
+		BufferedReader in = new BufferedReader(new FileReader(new File(DB_INITIAL_DATA_LOCATION+"FoursquarePlaces.csv")));
 
 		String line;
 

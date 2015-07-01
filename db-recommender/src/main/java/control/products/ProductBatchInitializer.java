@@ -91,15 +91,14 @@ public class ProductBatchInitializer {
 		}catch (Exception E) {
 			tx.failure();
 			E.printStackTrace();
-			return null;
-		} finally {
 			tx.close();
 			graphDb.shutdown();
-		}
+			return null;
+		} 
 
 	} 
 
-	private static void importProducts(ArrayList<Product> plist){
+	public static void importProducts(ArrayList<Product> plist){
 		HashMap<String,Long> categories = getCategoryMap();
 
 		BatchInserter inserter = BatchInserters.inserter( DB_PATH);

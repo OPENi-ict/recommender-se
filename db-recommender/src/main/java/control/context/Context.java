@@ -62,7 +62,9 @@ public class Context {
 	"fish tank","travelling","ps3","football","cinema","tv","jogging","3d modeling","piano","guitar",
 	"art","writing","movies","engineering","sports","rural electrification","politics","history",
 	"mountaineering","browsing","computer games","reading","tennis","programming","martial arts",
-	"basketball","hanging out","hiking","camping","baseball","rugby","surfing","mac","computers","gym"};
+	"basketball","hanging out","hiking","camping","baseball","rugby","surfing","mac","computers","gym",
+	"dancing","business","startup","swimming","eating","soccer","music","literature","cooking","photography",
+	"yoga","dance","theater","tv series","working","fishing","pets"};
 
 	private static String[] genderQueries = {
 		"MERGE (n:Context:Demographics:Gender {value:\"female\"})",
